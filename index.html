@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pharma Dashboard - MAT May 2025</title>
-    <!-- Including necessary libraries for React, Recharts, and data parsing -->
+    <!-- Including necessary libraries for React, Recharts, PapaParse, and react-select -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
     <script src="https://unpkg.com/papaparse@latest/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.15.0/Recharts.min.js"></script>
+    <script src="https://unpkg.com/react-select@5.8.0/dist/react-select.umd.js"></script>
     <style>
         /* Glassmorphic styles */
         body {
@@ -18,73 +19,41 @@
             color: #ffffff;
             font-family: 'Inter', Arial, sans-serif;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             margin: 0;
-            padding: 20px;
+            padding: 16px;
             box-sizing: border-box;
         }
         .glassmorphic {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
-            border-radius: 16px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 20px;
+            padding: 16px;
             transition: all 0.3s ease;
         }
         .glassmorphic:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 40px rgba(0, 0, 0, 0.2);
-        }
-        button {
-            background: linear-gradient(45deg, #ffd700, #ffaa00);
-            color: #1e1e1e;
-            font-weight: bold;
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-        button:hover {
-            transform: scale(1.05);
-        }
-        select {
-            background: rgba(255, 255, 255, 0.1);
-            color: #ef4444; /* Red text for dropdowns */
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
-            padding: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        select:focus {
-            outline: none;
-            border-color: #ffd700;
-        }
-        option {
-            color: #ef4444; /* Red text for dropdown options */
-            background: #1e1e1e;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.2);
         }
         .chart-container {
             width: 100%;
-            height: 350px;
-            margin-bottom: 24px;
+            height: 300px;
+            margin-bottom: 16px;
         }
         .table-container {
             max-height: 400px;
             overflow-y: auto;
-            margin-bottom: 24px;
+            overflow-x: auto;
+            margin-bottom: 16px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 600px;
         }
         th, td {
-            padding: 12px;
+            padding: 10px;
             text-align: left;
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
@@ -92,62 +61,58 @@
             background: rgba(255, 255, 255, 0.15);
             position: sticky;
             top: 0;
+            z-index: 1;
         }
         .container {
-            max-width: 1400px;
+            max-width: 100%;
             margin: 0 auto;
-            padding: 24px;
+            padding: 16px;
         }
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
         }
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 24px;
-        }
-        @media (min-width: 1024px) {
-            .grid-2 {
-                grid-template-columns: 1fr 1fr;
-            }
+            gap: 16px;
         }
         .flex {
             display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            justify-content: center;
-            margin-bottom: 24px;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
         }
         .text-center {
             text-align: center;
         }
         .text-lg {
-            font-size: 18px;
+            font-size: 1rem;
             font-weight: 600;
         }
         .text-2xl {
-            font-size: 24px;
+            font-size: 1.25rem;
             font-weight: bold;
         }
         .text-3xl {
-            font-size: 30px;
+            font-size: 1.5rem;
             font-weight: bold;
         }
         .mb-2 {
             margin-bottom: 8px;
         }
         .mb-6 {
-            margin-bottom: 24px;
+            margin-bottom: 16px;
         }
         .p-4 {
-            padding: 16px;
+            padding: 12px;
         }
         /* Custom scrollbar */
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
+            height: 6px;
         }
         ::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.1);
@@ -155,6 +120,84 @@
         ::-webkit-scrollbar-thumb {
             background: #ffd700;
             border-radius: 4px;
+        }
+        /* react-select styles */
+        .react-select__control {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #ef4444;
+            font-size: 14px;
+            width: 100%;
+            max-width: 300px;
+            cursor: pointer;
+        }
+        .react-select__control--is-focused {
+            border-color: #ffd700;
+            box-shadow: none;
+        }
+        .react-select__value-container {
+            color: #ef4444;
+        }
+        .react-select__single-value {
+            color: #ef4444;
+        }
+        .react-select__menu {
+            background: #1e1e1e;
+            border-radius: 8px;
+            color: #ef4444;
+        }
+        .react-select__option {
+            color: #ef4444;
+            background: #1e1e1e;
+        }
+        .react-select__option--is-focused {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .react-select__option--is-selected {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ef4444;
+        }
+        .react-select__input {
+            color: #ef4444 !important;
+        }
+        /* Responsive adjustments */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 1400px;
+            }
+            .grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+            .grid-2 {
+                grid-template-columns: 1fr 1fr;
+            }
+            .flex {
+                flex-direction: row;
+                justify-content: center;
+            }
+            .chart-container {
+                height: 350px;
+                margin-bottom: 24px;
+            }
+            .table-container {
+                margin-bottom: 24px;
+            }
+            th, td {
+                padding: 12px;
+            }
+            .text-lg {
+                font-size: 1.125rem;
+            }
+            .text-2xl {
+                font-size: 1.5rem;
+            }
+            .text-3xl {
+                font-size: 1.875rem;
+            }
+            .p-4 {
+                padding: 16px;
+            }
         }
     </style>
 </head>
@@ -169,6 +212,7 @@
             BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
             PieChart, Pie, Cell, AreaChart, Area
         } = Recharts;
+        const { default: Select } = Select; // react-select
 
         // Defining color palette
         const COLORS = ['#ffd700', '#ffaa00', '#8b5cf6', '#ffffff', '#10b981', '#ef4444'];
@@ -177,9 +221,9 @@
         const Dashboard = () => {
             // Initializing state for data and filters
             const [data, setData] = useState([]);
-            const [selectedCategory, setSelectedCategory] = useState('All');
-            const [selectedBrand, setSelectedBrand] = useState('All');
-            const [selectedCorporate, setSelectedCorporate] = useState('All');
+            const [selectedCategory, setSelectedCategory] = useState(null);
+            const [selectedBrand, setSelectedBrand] = useState(null);
+            const [selectedCorporate, setSelectedCorporate] = useState(null);
             const [categories, setCategories] = useState([]);
             const [brands, setBrands] = useState([]);
             const [corporates, setCorporates] = useState([]);
@@ -219,9 +263,15 @@
                                 }).filter(row => Object.values(row).some(val => val !== '' && val != null));
                                 
                                 setData(cleanedData);
-                                setCategories(['All', ...new Set(cleanedData.map(row => row.Category).filter(Boolean))]);
-                                setBrands(['All', ...new Set(cleanedData.map(row => row.Brands).filter(Boolean))]);
-                                setCorporates(['All', ...new Set(cleanedData.map(row => row.Corporate).filter(Boolean))]);
+                                const categoryOptions = ['All', ...new Set(cleanedData.map(row => row.Category).filter(Boolean))].map(val => ({ value: val, label: val }));
+                                const brandOptions = ['All', ...new Set(cleanedData.map(row => row.Brands).filter(Boolean))].map(val => ({ value: val, label: val }));
+                                const corporateOptions = ['All', ...new Set(cleanedData.map(row => row.Corporate).filter(Boolean))].map(val => ({ value: val, label: val }));
+                                setCategories(categoryOptions);
+                                setBrands(brandOptions);
+                                setCorporates(corporateOptions);
+                                setSelectedCategory(categoryOptions[0]);
+                                setSelectedBrand(brandOptions[0]);
+                                setSelectedCorporate(corporateOptions[0]);
                                 setLoading(false);
                             },
                             error: (err) => {
@@ -241,9 +291,9 @@
             // Filtering data based on dropdown selections
             const filteredData = data.filter(row => {
                 return (
-                    (selectedCategory === 'All' || row.Category === selectedCategory) &&
-                    (selectedBrand === 'All' || row.Brands === selectedBrand) &&
-                    (selectedCorporate === 'All' || row.Corporate === selectedCorporate)
+                    (!selectedCategory || selectedCategory.value === 'All' || row.Category === selectedCategory.value) &&
+                    (!selectedBrand || selectedBrand.value === 'All' || row.Brands === selectedBrand.value) &&
+                    (!selectedCorporate || selectedCorporate.value === 'All' || row.Corporate === selectedCorporate.value)
                 );
             }).sort((a, b) => (parseFloat(b['Value 25']) || 0) - (parseFloat(a['Value 25']) || 0));
 
@@ -302,40 +352,40 @@
                 <div className="container">
                     <h1 className="text-3xl mb-6 text-center">Pharma Market Analysis - MAT May 2025</h1>
                     
-                    {/* Dropdown filters */}
+                    {/* Dropdown filters with search */}
                     <div className="flex">
                         <div>
                             <label className="mr-2">Category:</label>
-                            <select
+                            <Select
+                                options={categories}
                                 value={selectedCategory}
-                                onChange={(e) => setSelectedCategory(e.target.value)}
-                            >
-                                {categories.map(category => (
-                                    <option key={category} value={category}>{category}</option>
-                                ))}
-                            </select>
+                                onChange={setSelectedCategory}
+                                placeholder="Select Category"
+                                classNamePrefix="react-select"
+                                isSearchable
+                            />
                         </div>
                         <div>
                             <label className="mr-2">Brand:</label>
-                            <select
+                            <Select
+                                options={brands}
                                 value={selectedBrand}
-                                onChange={(e) => setSelectedBrand(e.target.value)}
-                            >
-                                {brands.map(brand => (
-                                    <option key={brand} value={brand}>{brand}</option>
-                                ))}
-                            </select>
+                                onChange={setSelectedBrand}
+                                placeholder="Select Brand"
+                                classNamePrefix="react-select"
+                                isSearchable
+                            />
                         </div>
                         <div>
                             <label className="mr-2">Corporate:</label>
-                            <select
+                            <Select
+                                options={corporates}
                                 value={selectedCorporate}
-                                onChange={(e) => setSelectedCorporate(e.target.value)}
-                            >
-                                {corporates.map(corporate => (
-                                    <option key={corporate} value={corporate}>{corporate}</option>
-                                ))}
-                            </select>
+                                onChange={setSelectedCorporate}
+                                placeholder="Select Corporate"
+                                classNamePrefix="react-select"
+                                isSearchable
+                            />
                         </div>
                     </div>
 
@@ -367,8 +417,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={top5CorporatesValue}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} angle={-45} textAnchor="end" height={window.innerWidth < 768 ? 80 : 60} />
+                                    <YAxis stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Value 2025" fill="#ffd700" />
@@ -383,8 +433,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={top5CorporatesUnit}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} angle={-45} textAnchor="end" height={window.innerWidth < 768 ? 80 : 60} />
+                                    <YAxis stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" />
@@ -399,8 +449,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={top5BrandsValue}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} angle={-45} textAnchor="end" height={window.innerWidth < 768 ? 80 : 60} />
+                                    <YAxis stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Value 2025" fill="#ffd700" />
@@ -415,8 +465,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={top5BrandsUnit}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} angle={-45} textAnchor="end" height={window.innerWidth < 768 ? 80 : 60} />
+                                    <YAxis stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" />
@@ -431,8 +481,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={top5CategoriesValue}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} angle={-45} textAnchor="end" height={window.innerWidth < 768 ? 80 : 60} />
+                                    <YAxis stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Value 2025" fill="#ffd700" />
@@ -447,8 +497,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={top5CategoriesUnit}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} angle={-45} textAnchor="end" height={window.innerWidth < 768 ? 80 : 60} />
+                                    <YAxis stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" />
@@ -468,7 +518,7 @@
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
-                                        outerRadius={100}
+                                        outerRadius={window.innerWidth < 768 ? 80 : 100}
                                         label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
                                         labelLine={false}
                                     >
@@ -488,8 +538,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={top5CategoriesGrowth}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={value => `${value.toFixed(1)}%`} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} angle={-45} textAnchor="end" height={window.innerWidth < 768 ? 80 : 60} />
+                                    <YAxis stroke="#ffffff" fontSize={window.innerWidth < 768 ? 12 : 14} tickFormatter={value => `${value.toFixed(1)}%`} />
                                     <Tooltip formatter={value => `${value.toFixed(2)}%`} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Area type="monotone" dataKey="value1" name="Growth Value 2025" fill="#10b981" stroke="#10b981" fillOpacity={0.4} />

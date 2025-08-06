@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharma Dashboard - MAT May 2025</title>
+    <!-- Including necessary libraries for React, Recharts, and data parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+    <script src="https://unpkg.com/papaparse@latest/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.15.0/Recharts.min.js"></script>
+    <!-- Including Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Defining glassmorphic styles */
+        body {
+            background: linear-gradient(135deg, #4b0082, #1e3a8a);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .glassmorphic {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .glassmorphic:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 40px rgba(0, 0, 0, 0.2);
+        }
+        button {
+            background: linear-gradient(45deg, #ffd700, #ffaa00);
+            color: #1e1e1e;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        select {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ef4444; /* Red text for dropdowns */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        select:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+        option {
+            color: #ef4444; /* Red text for dropdown options */
+            background: #1e1e1e;
+        }
+        .chart-container {
+            width: 100%;
+            height: 300px;
+        }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        th {
+            background: rgba(255, 255, 255, 0.15);
+            position: sticky;
+            top: 0;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ffd700;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Setting up React and Recharts components
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+        const {
+            BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+            PieChart, Pie, Cell, LineChart, Line, AreaChart, Area
+        } = Recharts;
+
+        // Defining color palette
+        const COLORS = ['#ffd700', '#ffaa00', '#8b5cf6', '#ffffff', '#10b981', '#ef4444'];
+
+        // Defining main Dashboard component
+        const Dashboard = () => {
+            // Initializing state for data and filters
+            const [data, setData] = useState([]);
+            const [selectedCategory, setSelectedCategory] = useState('All');
+            const [selectedBrand, setSelectedBrand] = useState('All');
+            const [selectedCorporate, setSelectedCorporate] = useState('All');
+            const [categories, setCategories] = useState([]);
+            const [brands, setBrands] = useState([]);
+            const [corporates, setCorporates] = useState([]);
+            const [loading, setLoading] = useState(true);
+
+            // Fetching and parsing CSV data
+            useEffect(() => {
+                fetch('./data.csv')
+                    .then(response => response.text())
+                    .then(csvData => {
+                        Papa.parse(csvData, {
+                            header: true,
+                            skipEmptyLines: true,
+                            dynamicTyping: false,
+                            transformHeader: header => header.trim().replace(/^"|"$/g, ''),
+                            transform: (value, header) => value.trim().replace(/^"|"$/g, ''),
+                            complete: (results) => {
+                                const cleanedData = results.data.map(row => {
+                                    const cleaned = {};
+                                    Object.keys(row).forEach(key => {
+                                        let value = row[key];
+                                        if (typeof value === 'string') {
+                                            value = value.trim();
+                                            if (!isNaN(value) && value !== '') {
+                                                value = parseFloat(value);
+                                            }
+                                        }
+                                        cleaned[key.trim().replace(/^"|"$/g, '')] = value;
+                                    });
+                                    return cleaned;
+                                }).filter(row => Object.values(row).some(val => val !== '' && val != null));
+                                
+                                setData(cleanedData);
+                                
+                                // Extracting unique values for dropdowns
+                                setCategories(['All', ...new Set(cleanedData.map(row => row.Category).filter(Boolean))]);
+                                setBrands(['All', ...new Set(cleanedData.map(row => row.Brands).filter(Boolean))]);
+                                setCorporates(['All', ...new Set(cleanedData.map(row => row.Corporate).filter(Boolean))]);
+                                setLoading(false);
+                            },
+                            error: (err) => {
+                                console.error('Error parsing CSV:', err);
+                                setLoading(false);
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        console.error('Error fetching CSV:', err);
+                        setLoading(false);
+                    });
+            }, []);
+
+            // Filtering data based on dropdown selections
+            const filteredData = data.filter(row => {
+                return (
+                    (selectedCategory === 'All' || row.Category === selectedCategory) &&
+                    (selectedBrand === 'All' || row.Brands === selectedBrand) &&
+                    (selectedCorporate === 'All' || row.Corporate === selectedCorporate)
+                );
+            });
+
+            // Aggregating data for performance (limiting to 100 points per chart)
+            const aggregateData = (data, key, valueKey) => {
+                const grouped = {};
+                data.forEach(row => {
+                    const keyValue = row[key] || 'Unknown';
+                    if (!grouped[keyValue]) {
+                        grouped[keyValue] = { count: 0, total: 0 };
+                    }
+                    grouped[keyValue].count += 1;
+                    grouped[keyValue].total += (parseFloat(row[valueKey]) || 0);
+                });
+                const aggregated = Object.keys(grouped).map(key => ({
+                    name: key,
+                    value: grouped[key].total / grouped[key].count
+                }));
+                return aggregated.slice(0, 100); // Limiting to 100 points
+            };
+
+            // Calculating top performers
+            const topPerformers = filteredData
+                .sort((a, b) => (parseFloat(b['Value 25']) || 0) - (parseFloat(a['Value 25']) || 0))
+                .slice(0, 5);
+
+            // Preparing data for charts
+            const valueData = aggregateData(filteredData, 'Corporate', 'Value 25');
+            const unitData = aggregateData(filteredData, 'Corporate', 'Unit 25');
+            const shareData = aggregateData(filteredData, 'Corporate', 'Share 25');
+            const growthData = aggregateData(filteredData, 'Corporate', 'Growth Value 25');
+
+            // Formatting numbers for display
+            const formatNumber = (num) => {
+                if (isNaN(num)) return '0';
+                if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
+                if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+                if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+                return num.toFixed(0);
+            };
+
+            // Rendering loading state
+            if (loading) {
+                return <div className="text-center text-2xl">Loading...</div>;
+            }
+
+            // Rendering main dashboard
+            return (
+                <div className="max-w-7xl mx-auto p-6">
+                    <h1 className="text-3xl font-bold mb-6 text-center">Pharma Market Analysis - MAT May 2025</h1>
+                    
+                    {/* Rendering dropdown filters */}
+                    <div className="flex flex-wrap gap-4 mb-6 justify-center">
+                        <div>
+                            <label className="mr-2">Category:</label>
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                            >
+                                {categories.map(category => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="mr-2">Brand:</label>
+                            <select
+                                value={selectedBrand}
+                                onChange={(e) => setSelectedBrand(e.target.value)}
+                            >
+                                {brands.map(brand => (
+                                    <option key={brand} value={brand}>{brand}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="mr-2">Corporate:</label>
+                            <select
+                                value={selectedCorporate}
+                                onChange={(e) => setSelectedCorporate(e.target.value)}
+                            >
+                                {corporates.map(corporate => (
+                                    <option key={corporate} value={corporate}>{corporate}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Rendering summary section */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div className="glassmorphic p-4">
+                            <h2 className="text-lg font-semibold">Total Value (2025)</h2>
+                            <p className="text-2xl">{formatNumber(filteredData.reduce((sum, row) => sum + (parseFloat(row['Value 25']) || 0), 0))}</p>
+                        </div>
+                        <div className="glassmorphic p-4">
+                            <h2 className="text-lg font-semibold">Total Units (2025)</h2>
+                            <p className="text-2xl">{formatNumber(filteredData.reduce((sum, row) => sum + (parseFloat(row['Unit 25']) || 0), 0))}</p>
+                        </div>
+                        <div className="glassmorphic p-4">
+                            <h2 className="text-lg font-semibold">Average Share (2025)</h2>
+                            <p className="text-2xl">{(filteredData.reduce((sum, row) => sum + (parseFloat(row['Share 25']) || 0), 0) / (filteredData.length || 1)).toFixed(2)}%</p>
+                        </div>
+                        <div className="glassmorphic p-4">
+                            <h2 className="text-lg font-semibold">Average Growth (2025)</h2>
+                            <p className="text-2xl">{(filteredData.reduce((sum, row) => sum + (parseFloat(row['Growth Value 25']) || 0), 0) / (filteredData.length || 1)).toFixed(2)}%</p>
+                        </div>
+                    </div>
+
+                    {/* Rendering charts */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        {/* Bar Chart for Value by Corporate */}
+                        <div className="glassmorphic chart-container">
+                            <h2 className="text-lg font-semibold mb-2">Value by Corporate (2025)</h2>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={valueData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={12} />
+                                    <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
+                                    <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
+                                    <Legend />
+                                    <Bar dataKey="value" fill="#ffd700" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* Pie Chart for Market Share */}
+                        <div className="glassmorphic chart-container">
+                            <h2 className="text-lg font-semibold mb-2">Market Share by Corporate (2025)</h2>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={shareData}
+                                        dataKey="value"
+                                        nameKey="name"
+                                        cx="50%"
+                                        cy="50%"
+                                        outerRadius={80}
+                                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                                        labelLine={false}
+                                    >
+                                        {shareData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip formatter={value => `${value.toFixed(2)}%`} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* Line Chart for Units */}
+                        <div className="glassmorphic chart-container">
+                            <h2 className="text-lg font-semibold mb-2">Units by Corporate (2025)</h2>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={unitData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={12} />
+                                    <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
+                                    <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
+                                    <Legend />
+                                    <Line type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={2} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* Area Chart for Growth */}
+                        <div className="glassmorphic chart-container">
+                            <h2 className="text-lg font-semibold mb-2">Value Growth by Corporate (2025)</h2>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={growthData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={12} />
+                                    <YAxis stroke="#ffffff" fontSize={12} tickFormatter={value => `${value.toFixed(1)}%`} />
+                                    <Tooltip formatter={value => `${value.toFixed(2)}%`} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
+                                    <Legend />
+                                    <Area type="monotone" dataKey="value" fill="#10b981" stroke="#10b981" fillOpacity={0.4} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Rendering table for top performers */}
+                    <div className="glassmorphic table-container">
+                        <h2 className="text-lg font-semibold mb-2">Top Performers</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Brand</th>
+                                    <th>Corporate</th>
+                                    <th>Value 2025</th>
+                                    <th>Share 2025</th>
+                                    <th>Growth 2025</th>
+                                    <th>Units 2025</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {topPerformers.map((row, index) => (
+                                    <tr key={index}>
+                                        <td>{row.Category || 'N/A'}</td>
+                                        <td>{row.Brands || 'N/A'}</td>
+                                        <td>{row.Corporate || 'N/A'}</td>
+                                        <td>{formatNumber(parseFloat(row['Value 25']) || 0)}</td>
+                                        <td>{(parseFloat(row['Share 25']) || 0).toFixed(2)}%</td>
+                                        <td>{(parseFloat(row['Growth Value 25']) || 0).toFixed(2)}%</td>
+                                        <td>{formatNumber(parseFloat(row['Unit 25']) || 0)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Highlighting an interesting fact */}
+                    <div className="glassmorphic p-4 mt-6">
+                        <h2 className="text-lg font-semibold">Interesting Fact</h2>
+                        <p>
+                            Did you know? The highest growth in value for 2025 is observed in the PREGABALIN category, with
+                            GABICA from GETZ PHARMA showing a remarkable 26.95% growth, contributing significantly to its 47.81%
+                            market share in the category!
+                        </p>
+                    </div>
+                </div>
+            );
+        };
+
+        // Rendering the app
+        const root = createRoot(document.getElementById('root'));
+        root.render(<Dashboard />);
+    </script>
+</body>
+</html>

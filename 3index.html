@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharma Dashboard - MAT May 2025</title>
+    <!-- Including necessary libraries for React, Recharts, and data parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+    <script src="https://unpkg.com/papaparse@latest/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chrono-node/1.3.11/chrono.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.15.0/Recharts.min.js"></script>
+    <!-- Including Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #4b0082, #1e3a8a);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .glassmorphic {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .glassmorphic:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 40px rgba(0, 0, 0, 0.3);
+        }
+        button, select, input[type="file"] {
+            background: linear-gradient(45deg, #ffd700, #ffaa00);
+            color: #1e1e1e;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        button:hover, select:hover, input[type="file"]:hover {
+            transform: scale(1.05);
+        }
+        select {
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%231e1e1e" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            padding-right: 2rem;
+            color: #ff0000; /* Red text for dropdown */
+        }
+        select option {
+            background: #1e1e1e;
+            color: #ff0000; /* Red text for dropdown options */
+        }
+        .chart-container {
+            width: 100%;
+            height: 350px;
+        }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        th {
+            background: rgba(255, 255, 255, 0.2);
+            position: sticky;
+            top: 0;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ffd700;
+            border-radius: 4px;
+        }
+        .error-message {
+            color: #ef4444;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Setting up React and Recharts components
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+        const {
+            BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+            PieChart, Pie, Cell, LineChart, Line, AreaChart, Area
+        } = Recharts;
+
+        // Defining color palette for charts
+        const COLORS = ['#ffd700', '#ffaa00', '#8b5cf6', '#10b981', '#ef4444', '#3b82f6'];
+
+        // Formatting numbers for display
+        const formatNumber = (num) => {
+            if (isNaN(num) || num == null) return '0';
+            if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+            return num.toFixed(0);
+        };
+
+        // Custom tooltip component for charts
+        const CustomTooltip = ({ active, payload, label }) => {
+            if (active && payload && payload.length) {
+                return (
+                    <div className="glassmorphic p-4">
+                        <p className="font-bold">{label}</p>
+                        {payload.map((entry, index) => (
+                            <p key={index} style={{ color: entry.color }}>
+                                {entry.name}: {formatNumber(entry.value)}
+                            </p>
+                        ))}
+                    </div>
+                );
+            }
+            return null;
+        };
+
+        // Main Dashboard component
+        const Dashboard = () => {
+            // Initializing state variables
+            const [data, setData] = useState([]);
+            const [selectedCategory, setSelectedCategory] = useState('All');
+            const [selectedBrand, setSelectedBrand] = useState('All');
+            const [selectedCorporate, setSelectedCorporate] = useState('All');
+            const [categories, setCategories] = useState([]);
+            const [brands, setBrands] = useState([]);
+            const [corporates, setCorporates] = useState([]);
+            const [chartType, setChartType] = useState('Bar');
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+
+            // Loading initial data from data.csv
+            useEffect(() => {
+                setLoading(true);
+                setError(null);
+                if (typeof loadFileData === 'function') {
+                    const csvData = loadFileData('data.csv');
+                    Papa.parse(csvData, {
+                        header: true,
+                        skipEmptyLines: true,
+                        transformHeader: header => header.trim().replace(/^"|"$/g, ''),
+                        transform: (value, header) => {
+                            let cleaned = value.trim().replace(/^"|"$/g, '');
+                            if (cleaned && !isNaN(cleaned) && cleaned !== '') {
+                                return parseFloat(cleaned);
+                            }
+                            return cleaned;
+                        },
+                        complete: (results) => {
+                            const requiredHeaders = ['Category', 'Brands', 'Corporate', 'Value 25', 'Share 25', 'Growth Value 25', 'Unit 25'];
+                            const missingHeaders = requiredHeaders.filter(header => !results.meta.fields.includes(header));
+                            if (missingHeaders.length > 0) {
+                                setError(`Missing required headers: ${missingHeaders.join(', ')}`);
+                                setLoading(false);
+                                return;
+                            }
+                            const cleanedData = results.data.filter(row => 
+                                Object.values(row).some(val => val !== '' && val != null)
+                            );
+                            setData(cleanedData);
+                            setLoading(false);
+                        },
+                        error: (err) => {
+                            setError('Error parsing CSV file. Please ensure it is a valid CSV with the correct headers.');
+                            setLoading(false);
+                        }
+                    });
+                } else {
+                    setError('loadFileData function not available.');
+                    setLoading(false);
+                }
+            }, []);
+
+            // Extracting unique categories, brands, and corporates
+            useEffect(() => {
+                const uniqueCategories = ['All', ...new Set(data.map(row => row.Category).filter(Boolean))];
+                const uniqueBrands = ['All', ...new Set(data.map(row => row.Brands).filter(Boolean))];
+                const uniqueCorporates = ['All', ...new Set(data.map(row => row.Corporate).filter(Boolean))];
+                setCategories(uniqueCategories);
+                setBrands(uniqueBrands);
+                setCorporates(uniqueCorporates);
+            }, [data]);
+
+            // Filtering data based on selections
+            const filteredData = data.filter(row => 
+                (selectedCategory === 'All' || row.Category === selectedCategory) &&
+                (selectedBrand === 'All' || row.Brands === selectedBrand) &&
+                (selectedCorporate === 'All' || row.Corporate === selectedCorporate)
+            );
+
+            // Aggregating data for charts
+            const aggregateData = (data, key, valueKey) => {
+                const grouped = {};
+                data.forEach(row => {
+                    const keyValue = row[key] || 'Unknown';
+                    if (!grouped[keyValue]) {
+                        grouped[keyValue] = { count: 0, total: 0 };
+                    }
+                    grouped[keyValue].count += 1;
+                    grouped[keyValue].total += (parseFloat(row[valueKey]) || 0);
+                });
+                return Object.keys(grouped).map(key => ({
+                    name: key,
+                    value: grouped[key].total / grouped[key].count
+                })).slice(0, 20); // Limiting to 20 items for performance
+            };
+
+            // Preparing data for charts
+            const valueData = aggregateData(filteredData, 'Corporate', 'Value 25');
+            const shareData = aggregateData(filteredData, 'Corporate', 'Share 25');
+            const growthData = aggregateData(filteredData, 'Corporate', 'Growth Value 25');
+            const unitData = aggregateData(filteredData, 'Corporate', 'Unit 25');
+
+            // Getting top 5 performers by Value 25
+            const topPerformers = filteredData
+                .sort((a, b) => (parseFloat(b['Value 25']) || 0) - (parseFloat(a['Value 25']) || 0))
+                .slice(0, 5);
+
+            // Rendering chart based on selected chart type
+            const renderChart = (data, metric) => {
+                if (chartType === 'Bar') {
+                    return (
+                        <Recharts.BarChart data={data}>
+                            <Recharts.CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
+                            <Recharts.XAxis dataKey="name" angle={-45} textAnchor="end" height={70} stroke="#ffffff" />
+                            <Recharts.YAxis tickFormatter={formatNumber} stroke="#ffffff" fontSize={12} />
+                            <Recharts.Tooltip content={<CustomTooltip />} />
+                            <Recharts.Legend />
+                            <Recharts.Bar dataKey="value" name={metric} fill="#8b5cf6" />
+                        </Recharts.BarChart>
+                    );
+                } else if (chartType === 'Pie') {
+                    return (
+                        <Recharts.PieChart>
+                            <Recharts.Pie
+                                data={data}
+                                dataKey="value"
+                                nameKey="name"
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={100}
+                                label={({ name, value }) => `${name}: ${formatNumber(value)}`}
+                            >
+                                {data.map((entry, index) => (
+                                    <Recharts.Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Recharts.Pie>
+                            <Recharts.Tooltip content={<CustomTooltip />} />
+                            <Recharts.Legend />
+                        </Recharts.PieChart>
+                    );
+                } else if (chartType === 'Line') {
+                    return (
+                        <Recharts.LineChart data={data}>
+                            <Recharts.CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
+                            <Recharts.XAxis dataKey="name" angle={-45} textAnchor="end" height={70} stroke="#ffffff" />
+                            <Recharts.YAxis tickFormatter={formatNumber} stroke="#ffffff" fontSize={12} />
+                            <Recharts.Tooltip content={<CustomTooltip />} />
+                            <Recharts.Legend />
+                            <Recharts.Line type="monotone" dataKey="value" name={metric} stroke="#ffd700" strokeWidth={2} />
+                        </Recharts.LineChart>
+                    );
+                } else if (chartType === 'Area') {
+                    return (
+                        <Recharts.AreaChart data={data}>
+                            <Recharts.CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
+                            <Recharts.XAxis dataKey="name" angle={-45} textAnchor="end" height={70} stroke="#ffffff" />
+                            <Recharts.YAxis tickFormatter={formatNumber} stroke="#ffffff" fontSize={12} />
+                            <Recharts.Tooltip content={<CustomTooltip />} />
+                            <Recharts.Legend />
+                            <Recharts.Area type="monotone" dataKey="value" name={metric} fill="#8b5cf6" stroke="#ffd700" />
+                        </Recharts.AreaChart>
+                    );
+                }
+            };
+
+            // Handling loading state
+            if (loading) {
+                return <div className="text-center text-2xl">Loading...</div>;
+            }
+
+            // Handling error state
+            if (error) {
+                return <div className="error-message text-2xl">{error}</div>;
+            }
+
+            return (
+                <div className="max-w-7xl mx-auto p-6">
+                    {/* Rendering dashboard title */}
+                    <h1 className="text-4xl font-bold mb-8 text-center text-white">Pharma Market Analysis - MAT May 2025</h1>
+
+                    {/* Rendering file upload section */}
+                    <div className="glassmorphic mb-6 p-4 text-center">
+                        <label className="mr-4 text-lg">Upload data.csv:</label>
+                        <input type="file" accept=".csv" onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            setLoading(true);
+                            setError(null);
+                            Papa.parse(file, {
+                                header: true,
+                                skipEmptyLines: true,
+                                transformHeader: header => header.trim().replace(/^"|"$/g, ''),
+                                transform: (value, header) => {
+                                    let cleaned = value.trim().replace(/^"|"$/g, '');
+                                    if (cleaned && !isNaN(cleaned) && cleaned !== '') {
+                                        return parseFloat(cleaned);
+                                    }
+                                    return cleaned;
+                                },
+                                complete: (results) => {
+                                    const requiredHeaders = ['Category', 'Brands', 'Corporate', 'Value 25', 'Share 25', 'Growth Value 25', 'Unit 25'];
+                                    const missingHeaders = requiredHeaders.filter(header => !results.meta.fields.includes(header));
+                                    if (missingHeaders.length > 0) {
+                                        setError(`Missing required headers: ${missingHeaders.join(', ')}`);
+                                        setLoading(false);
+                                        return;
+                                    }
+                                    const cleanedData = results.data.filter(row => 
+                                        Object.values(row).some(val => val !== '' && val != null)
+                                    );
+                                    setData(cleanedData);
+                                    setLoading(false);
+                                },
+                                error: (err) => {
+                                    setError('Error parsing CSV file. Please ensure it is a valid CSV with the correct headers.');
+                                    setLoading(false);
+                                }
+                            });
+                        }} />
+                        {error && <p className="error-message mt-2">{error}</p>}
+                    </div>
+
+                    {/* Rendering filters section */}
+                    <div className="glassmorphic mb-6 p-4 flex flex-wrap gap-4 justify-center">
+                        <div>
+                            <label className="mr-2">Category:</label>
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                            >
+                                {categories.map(category => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="mr-2">Brand:</label>
+                            <select
+                                value={selectedBrand}
+                                onChange={(e) => setSelectedBrand(e.target.value)}
+                            >
+                                {brands.map(brand => (
+                                    <option key={brand} value={brand}>{brand}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="mr-2">Corporate:</label>
+                            <select
+                                value={selectedCorporate}
+                                onChange={(e) => setSelectedCorporate(e.target.value)}
+                            >
+                                {corporates.map(corporate => (
+                                    <option key={corporate} value={corporate}>{corporate}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Rendering chart type selection buttons */}
+                    <div className="glassmorphic mb-6 p-4 flex flex-wrap gap-4 justify-center">
+                        <button onClick={() => setChartType('Bar')}>Bar Chart</button>
+                        <button onClick={() => setChartType('Pie')}>Pie Chart</button>
+                        <button onClick={() => setChartType('Line')}>Line Chart</button>
+                        <button onClick={() => setChartType('Area')}>Area Chart</button>
+                    </div>
+
+                    {/* Rendering charts section */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div className="glassmorphic p-4">
+                            <h2 className="text-xl font-semibold mb-4">Value 25 by Corporate</h2>
+                            <div className="chart-container">
+                                <Recharts.ResponsiveContainer width="100%" height="100%">
+                                    {renderChart(valueData, 'Value 25')}
+                                </Recharts.ResponsiveContainer>
+                            </div>
+                        </div>
+                        <div className="glassmorphic p-4">
+                            <h2 className="text-xl font-semibold mb-4">Market Share 25 by Corporate</h2>
+                            <div className="chart-container">
+                                <Recharts.ResponsiveContainer width="100%" height="100%">
+                                    {renderChart(shareData, 'Share 25')}
+                                </Recharts.ResponsiveContainer>
+                            </div>
+                        </div>
+                        <div className="glassmorphic p-4">
+                            <h2 className="text-xl font-semibold mb-4">Growth Value 25 by Corporate</h2>
+                            <div className="chart-container">
+                                <Recharts.ResponsiveContainer width="100%" height="100%">
+                                    {renderChart(growthData, 'Growth Value 25')}
+                                </Recharts.ResponsiveContainer>
+                            </div>
+                        </div>
+                        <div className="glassmorphic p-4">
+                            <h2 className="text-xl font-semibold mb-4">Unit 25 by Corporate</h2>
+                            <div className="chart-container">
+                                <Recharts.ResponsiveContainer width="100%" height="100%">
+                                    {renderChart(unitData, 'Unit 25')}
+                                </Recharts.ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Rendering top performers section */}
+                    <div className="glassmorphic p-4 mb-6">
+                        <h2 className="text-xl font-semibold mb-4">Top 5 Performers by Value 25</h2>
+                        <div className="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Brand</th>
+                                        <th>Corporate</th>
+                                        <th>Value 25</th>
+                                        <th>Share 25</th>
+                                        <th>Growth Value 25</th>
+                                        <th>Unit 25</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {topPerformers.map((row, index) => (
+                                        <tr key={index}>
+                                            <td>{row.Category}</td>
+                                            <td>{row.Brands}</td>
+                                            <td>{row.Corporate}</td>
+                                            <td>{formatNumber(row['Value 25'])}</td>
+                                            <td>{formatNumber(row['Share 25'])}%</td>
+                                            <td>{formatNumber(row['Growth Value 25'])}%</td>
+                                            <td>{formatNumber(row['Unit 25'])}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Rendering interesting fact */}
+                    <div className="glassmorphic p-4">
+                        <h2 className="text-xl font-semibold mb-4">Interesting Fact</h2>
+                        <p>
+                            {topPerformers.length > 0 && (
+                                `The top performer, ${topPerformers[0].Brands} by ${topPerformers[0].Corporate} in the ${topPerformers[0].Category} category, 
+                                achieved a remarkable ${formatNumber(topPerformers[0]['Value 25'])} in sales for 2025, 
+                                contributing ${formatNumber(topPerformers[0]['Share 25'])}% to the market share.`
+                            )}
+                        </p>
+                    </div>
+                </div>
+            );
+        };
+
+        // Rendering the Dashboard component
+        const root = createRoot(document.getElementById('root'));
+        root.render(<Dashboard />);
+    </script>
+</body>
+</html>

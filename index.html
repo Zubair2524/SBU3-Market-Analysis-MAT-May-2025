@@ -71,7 +71,7 @@
         }
         .chart-container {
             width: 100%;
-            height: 300px;
+            height: 350px;
             margin-bottom: 24px;
         }
         .table-container {
@@ -94,7 +94,7 @@
             top: 0;
         }
         .container {
-            max-width: 1280px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 24px;
         }
@@ -245,44 +245,38 @@
                     (selectedBrand === 'All' || row.Brands === selectedBrand) &&
                     (selectedCorporate === 'All' || row.Corporate === selectedCorporate)
                 );
-            });
+            }).sort((a, b) => (parseFloat(b['Value 25']) || 0) - (parseFloat(a['Value 25']) || 0));
 
-            // Aggregating data for charts (Top 10 by key)
-            const aggregateTop10 = (data, groupKey, valueKey1, valueKey2 = null) => {
+            // Aggregating data for charts (Top 5 by key, summing values)
+            const aggregateTop5 = (data, groupKey, valueKey1, valueKey2 = null) => {
                 const grouped = {};
                 data.forEach(row => {
                     const keyValue = row[groupKey] || 'Unknown';
                     if (!grouped[keyValue]) {
-                        grouped[keyValue] = { value1: 0, value2: 0, count: 0 };
+                        grouped[keyValue] = { value1: 0, value2: 0 };
                     }
                     grouped[keyValue].value1 += parseFloat(row[valueKey1]) || 0;
                     if (valueKey2) {
                         grouped[keyValue].value2 += parseFloat(row[valueKey2]) || 0;
                     }
-                    grouped[keyValue].count += 1;
                 });
                 const aggregated = Object.keys(grouped).map(key => ({
                     name: key,
-                    value1: grouped[key].value1 / grouped[key].count,
-                    value2: valueKey2 ? grouped[key].value2 / grouped[key].count : 0
+                    value1: grouped[key].value1,
+                    value2: valueKey2 ? grouped[key].value2 : 0
                 }));
-                return aggregated.sort((a, b) => b.value1 - a.value1).slice(0, 10);
+                return aggregated.sort((a, b) => b.value1 - a.value1).slice(0, 5);
             };
 
             // Preparing data for charts
-            const top10CorporatesValue = aggregateTop10(filteredData, 'Corporate', 'Value 25', 'Value 24');
-            const top10CorporatesUnit = aggregateTop10(filteredData, 'Corporate', 'Unit 25', 'Unit 24');
-            const top10BrandsValue = aggregateTop10(filteredData, 'Brands', 'Value 25', 'Value 24');
-            const top10BrandsUnit = aggregateTop10(filteredData, 'Brands', 'Unit 25', 'Unit 24');
-            const top10CategoriesValue = aggregateTop10(filteredData, 'Category', 'Value 25', 'Value 24');
-            const top10CategoriesUnit = aggregateTop10(filteredData, 'Category', 'Unit 25', 'Unit 24');
-            const top10CorporatesShare = aggregateTop10(filteredData, 'Corporate', 'Share 25');
-            const top10CategoriesGrowth = aggregateTop10(filteredData, 'Category', 'Growth Value 25');
-
-            // Calculating top performers for table
-            const topPerformers = filteredData
-                .sort((a, b) => (parseFloat(b['Value 25']) || 0) - (parseFloat(a['Value 25']) || 0))
-                .slice(0, 5);
+            const top5CorporatesValue = aggregateTop5(filteredData, 'Corporate', 'Value 25', 'Value 24');
+            const top5CorporatesUnit = aggregateTop5(filteredData, 'Corporate', 'Unit 25', 'Unit 24');
+            const top5BrandsValue = aggregateTop5(filteredData, 'Brands', 'Value 25', 'Value 24');
+            const top5BrandsUnit = aggregateTop5(filteredData, 'Brands', 'Unit 25', 'Unit 24');
+            const top5CategoriesValue = aggregateTop5(filteredData, 'Category', 'Value 25', 'Value 24');
+            const top5CategoriesUnit = aggregateTop5(filteredData, 'Category', 'Unit 25', 'Unit 24');
+            const top5CorporatesShare = aggregateTop5(filteredData, 'Corporate', 'Share 25');
+            const top5CategoriesGrowth = aggregateTop5(filteredData, 'Category', 'Growth Value 25');
 
             // Formatting numbers for display
             const formatNumber = (num) => {
@@ -367,14 +361,14 @@
 
                     {/* Charts section */}
                     <div className="grid-2">
-                        {/* Top 10 Corporates (Value 25 vs Value 24) */}
+                        {/* Top 5 Corporates (Value 25 vs Value 24) */}
                         <div className="glassmorphic chart-container">
-                            <h2 className="text-lg mb-2">Top 10 Corporates (Value 2025 vs 2024)</h2>
+                            <h2 className="text-lg mb-2">Top 5 Corporates (Value 2025 vs 2024)</h2>
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={top10CorporatesValue}>
+                                <BarChart data={top5CorporatesValue}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={12} />
-                                    <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Value 2025" fill="#ffd700" />
@@ -383,14 +377,14 @@
                             </ResponsiveContainer>
                         </div>
 
-                        {/* Top 10 Corporates (Unit 25 vs Unit 24) */}
+                        {/* Top 5 Corporates (Unit 25 vs Unit 24) */}
                         <div className="glassmorphic chart-container">
-                            <h2 className="text-lg mb-2">Top 10 Corporates (Unit 2025 vs 2024)</h2>
+                            <h2 className="text-lg mb-2">Top 5 Corporates (Unit 2025 vs 2024)</h2>
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={top10CorporatesUnit}>
+                                <BarChart data={top5CorporatesUnit}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={12} />
-                                    <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" />
@@ -399,14 +393,14 @@
                             </ResponsiveContainer>
                         </div>
 
-                        {/* Top 10 Brands (Value 25 vs Value 24) */}
+                        {/* Top 5 Brands (Value 25 vs Value 24) */}
                         <div className="glassmorphic chart-container">
-                            <h2 className="text-lg mb-2">Top 10 Brands (Value 2025 vs 2024)</h2>
+                            <h2 className="text-lg mb-2">Top 5 Brands (Value 2025 vs 2024)</h2>
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={top10BrandsValue}>
+                                <BarChart data={top5BrandsValue}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={12} />
-                                    <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Value 2025" fill="#ffd700" />
@@ -415,14 +409,14 @@
                             </ResponsiveContainer>
                         </div>
 
-                        {/* Top 10 Brands (Unit 25 vs Unit 24) */}
+                        {/* Top 5 Brands (Unit 25 vs Unit 24) */}
                         <div className="glassmorphic chart-container">
-                            <h2 className="text-lg mb-2">Top 10 Brands (Unit 2025 vs 2024)</h2>
+                            <h2 className="text-lg mb-2">Top 5 Brands (Unit 2025 vs 2024)</h2>
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={top10BrandsUnit}>
+                                <BarChart data={top5BrandsUnit}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={12} />
-                                    <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" />
@@ -431,14 +425,14 @@
                             </ResponsiveContainer>
                         </div>
 
-                        {/* Top 10 Categories (Value 25 vs Value 24) */}
+                        {/* Top 5 Categories (Value 25 vs Value 24) */}
                         <div className="glassmorphic chart-container">
-                            <h2 className="text-lg mb-2">Top 10 Categories (Value 2025 vs 2024)</h2>
+                            <h2 className="text-lg mb-2">Top 5 Categories (Value 2025 vs 2024)</h2>
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={top10CategoriesValue}>
+                                <BarChart data={top5CategoriesValue}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={12} />
-                                    <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Value 2025" fill="#ffd700" />
@@ -447,14 +441,14 @@
                             </ResponsiveContainer>
                         </div>
 
-                        {/* Top 10 Categories (Unit 25 vs Unit 24) */}
+                        {/* Top 5 Categories (Unit 25 vs Unit 24) */}
                         <div className="glassmorphic chart-container">
-                            <h2 className="text-lg mb-2">Top 10 Categories (Unit 2025 vs 2024)</h2>
+                            <h2 className="text-lg mb-2">Top 5 Categories (Unit 2025 vs 2024)</h2>
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={top10CategoriesUnit}>
+                                <BarChart data={top5CategoriesUnit}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={12} />
-                                    <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" />
@@ -463,22 +457,22 @@
                             </ResponsiveContainer>
                         </div>
 
-                        {/* Pie Chart for Market Share by Top 10 Corporates */}
+                        {/* Pie Chart for Market Share by Top 5 Corporates */}
                         <div className="glassmorphic chart-container">
-                            <h2 className="text-lg mb-2">Market Share by Top 10 Corporates (2025)</h2>
+                            <h2 className="text-lg mb-2">Market Share by Top 5 Corporates (2025)</h2>
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
-                                        data={top10CorporatesShare}
+                                        data={top5CorporatesShare}
                                         dataKey="value1"
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
-                                        outerRadius={80}
+                                        outerRadius={100}
                                         label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
                                         labelLine={false}
                                     >
-                                        {top10CorporatesShare.map((entry, index) => (
+                                        {top5CorporatesShare.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
@@ -488,14 +482,14 @@
                             </ResponsiveContainer>
                         </div>
 
-                        {/* Area Chart for Growth by Top 10 Categories */}
+                        {/* Area Chart for Growth by Top 5 Categories */}
                         <div className="glassmorphic chart-container">
-                            <h2 className="text-lg mb-2">Growth Value by Top 10 Categories (2025)</h2>
+                            <h2 className="text-lg mb-2">Growth Value by Top 5 Categories (2025)</h2>
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={top10CategoriesGrowth}>
+                                <AreaChart data={top5CategoriesGrowth}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={12} />
-                                    <YAxis stroke="#ffffff" fontSize={12} tickFormatter={value => `${value.toFixed(1)}%`} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={value => `${value.toFixed(1)}%`} />
                                     <Tooltip formatter={value => `${value.toFixed(2)}%`} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Area type="monotone" dataKey="value1" name="Growth Value 2025" fill="#10b981" stroke="#10b981" fillOpacity={0.4} />
@@ -504,9 +498,9 @@
                         </div>
                     </div>
 
-                    {/* Table for top performers */}
+                    {/* Table for all filtered entries */}
                     <div className="glassmorphic table-container">
-                        <h2 className="text-lg mb-2">Top Performers</h2>
+                        <h2 className="text-lg mb-2">All Entries (Sorted by Value 2025)</h2>
                         <table>
                             <thead>
                                 <tr>
@@ -520,7 +514,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {topPerformers.map((row, index) => (
+                                {filteredData.map((row, index) => (
                                     <tr key={index}>
                                         <td>{row.Category || 'N/A'}</td>
                                         <td>{row.Brands || 'N/A'}</td>
@@ -539,9 +533,7 @@
                     <div className="glassmorphic p-4">
                         <h2 className="text-lg mb-2">Interesting Fact</h2>
                         <p>
-                            Did you know? The highest growth in value for 2025 is observed in the PREGABALIN category, with
-                            GABICA from GETZ PHARMA showing a remarkable 26.95% growth, contributing significantly to its 47.81%
-                            market share in the category!
+                            Did you know? GETZ PHARMA leads the market with the highest total value in 2025, driven by strong performance in brands like GABICA in the PREGABALIN category, achieving a remarkable 26.95% growth!
                         </p>
                     </div>
                 </div>

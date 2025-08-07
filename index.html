@@ -4,147 +4,169 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pharma Dashboard - MAT May 2025</title>
-    <!-- Including necessary libraries -->
+    <!-- Including necessary libraries for React, Recharts, and data parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
     <script src="https://unpkg.com/papaparse@latest/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.15.0/Recharts.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/typography@0.5.10/dist/typography.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Tailwind CSS setup */
+        /* Glassmorphic styles */
         body {
+            background: linear-gradient(135deg, #4b0082, #1e3a8a);
+            color: #ffffff;
             font-family: 'Inter', Arial, sans-serif;
             min-height: 100vh;
             margin: 0;
-            padding: 0;
+            padding: 2vw;
             box-sizing: border-box;
+        }
+        .glassmorphic {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 2vw;
+            transition: all 0.3s ease;
+        }
+        .glassmorphic:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 40px rgba(0, 0, 0, 0.2);
+        }
+        button {
+            background: linear-gradient(45deg, #ffd700, #ffaa00);
+            color: #1e1e1e;
+            font-weight: bold;
+            padding: 0.8rem 1.6rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        select {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ef4444; /* Red text for dropdowns */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 0.8rem;
+            font-size: calc(12px + 0.5vw);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            max-width: 200px;
+        }
+        select:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+        option {
+            color: #ef4444;
+            background: #1e1e1e;
+        }
+        .chart-container {
+            width: 100%;
+            height: calc(300px + 5vw); /* Responsive height */
+            margin-bottom: 3vw;
+        }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-x: auto;
+            margin-bottom: 3vw;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px; /* Ensures horizontal scrolling on mobile */
+        }
+        th, td {
+            padding: 1vw;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: calc(10px + 0.5vw);
+        }
+        th {
+            background: rgba(255, 255, 255, 0.15);
+            position: sticky;
+            top: 0;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2vw;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2vw;
+            margin-bottom: 3vw;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2vw;
+        }
+        @media (min-width: 1024px) {
+            .grid-2 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .chart-container {
+                height: 250px; /* Smaller charts on mobile */
+            }
+            th, td {
+                padding: 0.5vw;
+                font-size: calc(8px + 0.5vw);
+            }
+            select {
+                font-size: calc(10px + 0.5vw);
+                padding: 0.5rem;
+            }
+        }
+        .flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2vw;
+            justify-content: center;
+            margin-bottom: 3vw;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-lg {
+            font-size: calc(14px + 0.5vw);
+            font-weight: 600;
+        }
+        .text-2xl {
+            font-size: calc(18px + 0.5vw);
+            font-weight: bold;
+        }
+        .text-3xl {
+            font-size: calc(24px + 0.5vw);
+            font-weight: bold;
+        }
+        .mb-2 {
+            margin-bottom: 1vw;
+        }
+        .mb-6 {
+            margin-bottom: 3vw;
+        }
+        .p-4 {
+            padding: 1.5vw;
         }
         /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #ffd700;
-            border-radius: 4px;
-        }
-        /* Glassmorphic styles for cards */
-        .glassmorphic {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 20px;
-            transition: all 0.3s ease;
-        }
-        .glassmorphic:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 40px rgba(0, 0, 0, 0.2);
-        }
-        /* Clickable chart elements */
-        .chart-bar, .chart-pie, .chart-area, .table-row {
-            cursor: pointer;
-            transition: opacity 0.2s ease;
-        }
-        .chart-bar:hover, .chart-pie:hover, .chart-area:hover, .table-row:hover {
-            opacity: 0.8;
-        }
-        /* Custom dropdown styles */
-select {
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.5rem center;
-    background-size: 1.5em;
-}
-select:focus {
-    color: #000000; /* Black text when dropdown is clicked/focused */
-    outline: none;
-    border-color: #ffd700;
-}
-        
-      /* Search input style */
-        input[type="text"] {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
-            padding: 8px;
-            color: #ffffff;
-        }
-        input[type="text"]:: attorno
-
-System: You are Grok 3 built by xAI.
-
-The response was cut off due to reaching the maximum token limit. I'll provide a complete and enriched version of the HTML code with the requested features: theme selection, responsive design, clickable chart and table elements, dynamic filtering, a clear filters option, a searchable dropdown, calculated growth and market share, a molecule filter, and chart data labels. The artifact will retain the same artifact_id since it's an update to the provided code.
-
-<xaiArtifact artifact_id="dde43a48-c418-4f1b-bb37-5c4e8fd21674" artifact_version_id="d7d479a6-49e1-43b6-a3d9-651faa301b0c" title="index.html" contentType="text/html">
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pharma Dashboard - MAT May 2025</title>
-    <!-- Including necessary libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-    <script src="https://unpkg.com/papaparse@latest/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.15.0/Recharts.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', Arial, sans-serif;
-            min-height: 100vh;
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        .glassmorphic {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 20px;
-            transition: all 0.3s ease;
-        }
-        .glassmorphic:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 40px rgba(0, 0, 0, 0.2);
-        }
-        .chart-bar, .chart-pie, .chart-area, .table-row {
-            cursor: pointer;
-            transition: opacity 0.2s ease;
-        }
-        .chart-bar:hover, .chart-pie:hover, .chart-area:hover, .table-row:hover {
-            opacity: 0.8;
-        }
-        select {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.5rem center;
-            background-size: 1.5em;
-        }
-        input[type="text"] {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
-            padding: 8px;
-            color: #ffffff;
-        }
-        input[type="text"]::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
-        ::-webkit-scrollbar {
-            width: 8px;
+            height: 8px;
         }
         ::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.1);
@@ -159,84 +181,37 @@ The response was cut off due to reaching the maximum token limit. I'll provide a
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        // Setting up React and Recharts components
+        const { useState, useEffect } = React;
         const { createRoot } = ReactDOM;
         const {
             BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-            PieChart, Pie, Cell, AreaChart, Area, LabelList
+            PieChart, Pie, Cell, AreaChart, Area
         } = Recharts;
 
+        // Defining color palette
         const COLORS = ['#ffd700', '#ffaa00', '#8b5cf6', '#ffffff', '#10b981', '#ef4444'];
 
-        // Themes configuration
-        const themes = {
-            dark: {
-                background: 'bg-gradient-to-br from-indigo-900 to-blue-900',
-                text: 'text-white',
-                button: 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900',
-                select: 'bg-gray-800/50 text-red-500 border-gray-600',
-            },
-            light: {
-                background: 'bg-gradient-to-br from-gray-100 to-gray-300',
-                text: 'text-gray-900',
-                button: 'bg-gradient-to-r from-blue-400 to-blue-600 text-white',
-                select: 'bg-white/50 text-blue-700 border-blue-300',
-            },
-            neon: {
-                background: 'bg-gradient-to-br from-pink-900 to-purple-900',
-                text: 'text-white',
-                button: 'bg-gradient-to-r from-pink-400 to-purple-400 text-white',
-                select: 'bg-purple-800/50 text-pink-300 border-purple-600',
-            }
-        };
-
-        const SearchableDropdown = ({ label, options, value, onChange, name }) => {
-            const [search, setSearch] = useState('');
-            const filteredOptions = options.filter(opt => 
-                opt.toLowerCase().includes(search.toLowerCase())
-            );
-
-            return (
-                <div className="relative">
-                    <label className="mr-2 text-sm font-medium">{label}:</label>
-                    <input
-                        type="text"
-                        placeholder={`Search ${label}...`}
-                        className="w-full p-2 mb-2 rounded"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                    <select
-                        value={value}
-                        onChange={(e) => onChange(e.target.value, name)}
-                        className="w-full p-2 rounded border"
-                    >
-                        {filteredOptions.map(option => (
-                            <option key={option} value={option}>{option}</option>
-                        ))}
-                    </select>
-                </div>
-            );
-        };
-
+        // Defining main Dashboard component
         const Dashboard = () => {
+            // Initializing state for data and filters
             const [data, setData] = useState([]);
             const [selectedCategory, setSelectedCategory] = useState('All');
             const [selectedBrand, setSelectedBrand] = useState('All');
             const [selectedCorporate, setSelectedCorporate] = useState('All');
-            const [selectedMolecule, setSelectedMolecule] = useState('All');
             const [categories, setCategories] = useState([]);
             const [brands, setBrands] = useState([]);
             const [corporates, setCorporates] = useState([]);
-            const [molecules, setMolecules] = useState([]);
             const [loading, setLoading] = useState(true);
             const [error, setError] = useState(null);
-            const [theme, setTheme] = useState('dark');
 
+            // Fetching and parsing CSV data
             useEffect(() => {
                 fetch('./data.csv')
                     .then(response => {
-                        if (!response.ok) throw new Error('Failed to fetch data.csv');
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch data.csv');
+                        }
                         return response.text();
                     })
                     .then(csvData => {
@@ -259,88 +234,70 @@ The response was cut off due to reaching the maximum token limit. I'll provide a
                                         }
                                         cleaned[key.trim().replace(/^"|"$/g, '')] = value;
                                     });
-                                    // Calculate growth
-                                    cleaned['Growth Value 25'] = row['Value 24'] ? 
-                                        ((row['Value 25'] - row['Value 24']) / row['Value 24'] * 100).toFixed(2) : 0;
-                                    cleaned['Growth Unit 25'] = row['Unit 24'] ? 
-                                        ((row['Unit 25'] - row['Unit 24']) / row['Unit 24'] * 100).toFixed(2) : 0;
                                     return cleaned;
                                 }).filter(row => Object.values(row).some(val => val !== '' && val != null));
-
-                                // Calculate market share
-                                const categoryTotals = {};
-                                cleanedData.forEach(row => {
-                                    if (!categoryTotals[row.Category]) {
-                                        categoryTotals[row.Category] = { value: 0, unit: 0 };
-                                    }
-                                    categoryTotals[row.Category].value += parseFloat(row['Value 25']) || 0;
-                                    categoryTotals[row.Category].unit += parseFloat(row['Unit 25']) || 0;
-                                });
-
-                                cleanedData.forEach(row => {
-                                    row['Share 25'] = categoryTotals[row.Category] ? 
-                                        ((row['Value 25'] / categoryTotals[row.Category].value) * 100).toFixed(2) : 0;
-                                    row['Share Unit 25'] = categoryTotals[row.Category] ? 
-                                        ((row['Unit 25'] / categoryTotals[row.Category].unit) * 100).toFixed(2) : 0;
-                                });
-
+                                
                                 setData(cleanedData);
                                 setCategories(['All', ...new Set(cleanedData.map(row => row.Category).filter(Boolean))]);
                                 setBrands(['All', ...new Set(cleanedData.map(row => row.Brands).filter(Boolean))]);
                                 setCorporates(['All', ...new Set(cleanedData.map(row => row.Corporate).filter(Boolean))]);
-                                setMolecules(['All', ...new Set(cleanedData.map(row => row.Molecule).filter(Boolean))]);
                                 setLoading(false);
                             },
                             error: (err) => {
+                                console.error('Error parsing CSV:', err);
                                 setError('Error parsing CSV data');
                                 setLoading(false);
                             }
                         });
                     })
                     .catch(err => {
-                        setError('Error fetching CSV file');
+                        console.error('Error fetching CSV:', err);
+                        setError('Error fetching CSV file. Please ensure the file is served over HTTP/HTTPS.');
                         setLoading(false);
                     });
             }, []);
 
-            const handleFilterChange = (value, filterType) => {
-                if (filterType === 'Category') setSelectedCategory(value);
-                else if (filterType === 'Brand') setSelectedBrand(value);
-                else if (filterType === 'Corporate') setSelectedCorporate(value);
-                else if (filterType === 'Molecule') setSelectedMolecule(value);
-            };
-
-            const clearFilters = () => {
-                setSelectedCategory('All');
-                setSelectedBrand('All');
-                setSelectedCorporate('All');
-                setSelectedMolecule('All');
-            };
-
-            const filteredData = useMemo(() => {
-                return data.filter(row => (
+            // Filtering data based on dropdown selections
+            const filteredData = data.filter(row => {
+                return (
                     (selectedCategory === 'All' || row.Category === selectedCategory) &&
                     (selectedBrand === 'All' || row.Brands === selectedBrand) &&
-                    (selectedCorporate === 'All' || row.Corporate === selectedCorporate) &&
-                    (selectedMolecule === 'All' || row.Molecule === selectedMolecule)
-                )).sort((a, b) => (parseFloat(b['Value 25']) || 0) - (parseFloat(a['Value 25']) || 0));
-            }, [data, selectedCategory, selectedBrand, selectedCorporate, selectedMolecule]);
+                    (selectedCorporate === 'All' || row.Corporate === selectedCorporate)
+                );
+            }).sort((a, b) => (parseFloat(b['Value 25']) || 0) - (parseFloat(a['Value 25']) || 0));
 
+            // Aggregating data for charts (Top 5 by key, summing values)
             const aggregateTop5 = (data, groupKey, valueKey1, valueKey2 = null) => {
                 const grouped = {};
                 data.forEach(row => {
                     const keyValue = row[groupKey] || 'Unknown';
-                    if (!grouped[keyValue]) grouped[keyValue] = { value1: 0, value2: 0 };
+                    if (!grouped[keyValue]) {
+                        grouped[keyValue] = { value1: 0, value2: 0 };
+                    }
                     grouped[keyValue].value1 += parseFloat(row[valueKey1]) || 0;
-                    if (valueKey2) grouped[keyValue].value2 += parseFloat(row[valueKey2]) || 0;
+                    if (valueKey2) {
+                        grouped[keyValue].value2 += parseFloat(row[valueKey2]) || 0;
+                    }
                 });
-                return Object.keys(grouped).map(key => ({
+                const aggregated = Object.keys(grouped).map(key => ({
                     name: key,
                     value1: grouped[key].value1,
-                    value2: grouped[key].value2
-                })).sort((a, b) => b.value1 - a.value1).slice(0, 5);
+                    value2: valueKey2 ? grouped[key].value2 : 0
+                }));
+                return aggregated.sort((a, b) => b.value1 - a.value1).slice(0, 5);
             };
 
+            // Preparing data for charts
+            const top5CorporatesValue = aggregateTop5(filteredData, 'Corporate', 'Value 25', 'Value 24');
+            const top5CorporatesUnit = aggregateTop5(filteredData, 'Corporate', 'Unit 25', 'Unit 24');
+            const top5BrandsValue = aggregateTop5(filteredData, 'Brands', 'Value 25', 'Value 24');
+            const top5BrandsUnit = aggregateTop5(filteredData, 'Brands', 'Unit 25', 'Unit 24');
+            const top5CategoriesValue = aggregateTop5(filteredData, 'Category', 'Value 25', 'Value 24');
+            const top5CategoriesUnit = aggregateTop5(filteredData, 'Category', 'Unit 25', 'Unit 24');
+            const top5CorporatesShare = aggregateTop5(filteredData, 'Corporate', 'Share 25');
+            const top5CategoriesGrowth = aggregateTop5(filteredData, 'Category', 'Growth Value 25');
+
+            // Formatting numbers for display
             const formatNumber = (num) => {
                 if (isNaN(num)) return '0';
                 if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
@@ -349,292 +306,262 @@ The response was cut off due to reaching the maximum token limit. I'll provide a
                 return num.toFixed(0);
             };
 
-            const handleChartClick = (data, filterType) => {
-                if (data && data.activeLabel) {
-                    handleFilterChange(data.activeLabel, filterType);
-                }
-            };
+            // Rendering error state
+            if (error) {
+                return <div className="text-center text-2xl">{error}</div>;
+            }
 
-            const handleTableRowClick = (row, filterType) => {
-                handleFilterChange(row[filterType], filterType);
-            };
+            // Rendering loading state
+            if (loading) {
+                return <div className="text-center text-2xl">Loading...</div>;
+            }
 
-            if (error) return <div className="text-center text-2xl text-red-500">{error}</div>;
-            if (loading) return <div className="text-center text-2xl text-white">Loading...</div>;
-
+            // Rendering main dashboard
             return (
-                <div className={`min-h-screen ${themes[theme].background} ${themes[theme].text} p-4 sm:p-6 md:p-8`}>
-                    <div className="max-w-7xl mx-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <h1 className="text-2xl sm:text-3xl font-bold">Pharma Market Analysis - MAT May 2025</h1>
+                <div className="container">
+                    <h1 className="text-3xl mb-6 text-center">Pharma Market Analysis - MAT May 2025</h1>
+                    
+                    {/* Dropdown filters */}
+                    <div className="flex">
+                        <div>
+                            <label className="mr-2">Category:</label>
                             <select
-                                value={theme}
-                                onChange={(e) => setTheme(e.target.value)}
-                                className={`p-2 rounded ${themes[theme].select}`}
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
                             >
-                                <option value="dark">Dark Theme</option>
-                                <option value="light">Light Theme</option>
-                                <option value="neon">Neon Theme</option>
+                                {categories.map(category => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))}
                             </select>
                         </div>
-
-                        <div className="flex flex-wrap gap-4 mb-6">
-                            <SearchableDropdown
-                                label="Category"
-                                options={categories}
-                                value={selectedCategory}
-                                onChange={handleFilterChange}
-                                name="Category"
-                            />
-                            <SearchableDropdown
-                                label="Brand"
-                                options={brands}
+                        <div>
+                            <label className="mr-2">Brand:</label>
+                            <select
                                 value={selectedBrand}
-                                onChange={handleFilterChange}
-                                name="Brand"
-                            />
-                            <SearchableDropdown
-                                label="Corporate"
-                                options={corporates}
-                                value={selectedCorporate}
-                                onChange={handleFilterChange}
-                                name="Corporate"
-                            />
-                            <SearchableDropdown
-                                label="Molecule"
-                                options={molecules}
-                                value={selectedMolecule}
-                                onChange={handleFilterChange}
-                                name="Molecule"
-                            />
-                            <button
-                                onClick={clearFilters}
-                                className={`px-4 py-2 rounded font-bold ${themes[theme].button}`}
+                                onChange={(e) => setSelectedBrand(e.target.value)}
                             >
-                                Clear Filters
-                            </button>
+                                {brands.map(brand => (
+                                    <option key={brand} value={brand}>{brand}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="mr-2">Corporate:</label>
+                            <select
+                                value={selectedCorporate}
+                                onChange={(e) => setSelectedCorporate(e.target.value)}
+                            >
+                                {corporates.map(corporate => (
+                                    <option key={corporate} value={corporate}>{corporate}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Summary section */}
+                    <div className="grid">
+                        <div className="glassmorphic p-4">
+                            <h2 className="text-lg mb-2">Total Value (2025)</h2>
+                            <p className="text-2xl">{formatNumber(filteredData.reduce((sum, row) => sum + (parseFloat(row['Value 25']) || 0), 0))}</p>
+                        </div>
+                        <div className="glassmorphic p-4">
+                            <h2 className="text-lg mb-2">Total Units (2025)</h2>
+                            <p className="text-2xl">{formatNumber(filteredData.reduce((sum, row) => sum + (parseFloat(row['Unit 25']) || 0), 0))}</p>
+                        </div>
+                        <div className="glassmorphic p-4">
+                            <h2 className="text-lg mb-2">Average Share (2025)</h2>
+                            <p className="text-2xl">{(filteredData.reduce((sum, row) => sum + (parseFloat(row['Share 25']) || 0), 0) / (filteredData.length || 1)).toFixed(2)}%</p>
+                        </div>
+                        <div className="glassmorphic p-4">
+                            <h2 className="text-lg mb-2">Average Growth (2025)</h2>
+                            <p className="text-2xl">{(filteredData.reduce((sum, row) => sum + (parseFloat(row['Growth Value 25']) || 0), 0) / (filteredData.length || 1)).toFixed(2)}%</p>
+                        </div>
+                    </div>
+
+                    {/* Charts section */}
+                    <div className="grid-2">
+                        {/* Top 5 Corporates (Value 25 vs Value 24) */}
+                        <div className="glassmorphic chart-container">
+                            <h2 className="text-lg mb-2">Top 5 Corporates (Value 2025 vs 2024)</h2>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={top5CorporatesValue}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={formatNumber} />
+                                    <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
+                                    <Legend />
+                                    <Bar dataKey="value1" name="Value 2025" fill="#ffd700" />
+                                    <Bar dataKey="value2" name="Value 2024" fill="#8b5cf6" />
+                                </BarChart>
+                            </ResponsiveContainer>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                            <div className="glassmorphic p-4">
-                                <h2 className="text-lg font-semibold mb-2">Total Value (2025)</h2>
-                                <p className="text-2xl">{formatNumber(filteredData.reduce((sum, row) => sum + (parseFloat(row['Value 25']) || 0), 0))}</p>
-                            </div>
-                            <div className="glassmorphic p-4">
-                                <h2 className="text-lg font-semibold mb-2">Total Units (2025)</h2>
-                                <p className="text-2xl">{formatNumber(filteredData.reduce((sum, row) => sum + (parseFloat(row['Unit 25']) || 0), 0))}</p>
-                            </div>
-                            <div className="glassmorphic p-4">
-                                <h2 className="text-lg font-semibold mb-2">Average Share (2025)</h2>
-                                <p className="text-2xl">{(filteredData.reduce((sum, row) => sum + (parseFloat(row['Share 25']) || 0), 0) / (filteredData.length || 1)).toFixed(2)}%</p>
-                            </div>
-                            <div className="glassmorphic p-4">
-                                <h2 className="text-lg font-semibold mb-2">Average Growth (2025)</h2>
-                                <p className="text-2xl">{(filteredData.reduce((sum, row) => sum + (parseFloat(row['Growth Value 25']) || 0), 0) / (filteredData.length || 1)).toFixed(2)}%</p>
-                            </div>
+                        {/* Top 5 Corporates (Unit 25 vs Unit 24) */}
+                        <div className="glassmorphic chart-container">
+                            <h2 className="text-lg mb-2">Top 5 Corporates (Unit 2025 vs 2024)</h2>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={top5CorporatesUnit}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={formatNumber} />
+                                    <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
+                                    <Legend />
+                                    <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" />
+                                    <Bar dataKey="value2" name="Unit 2024" fill="#8b5cf6" />
+                                </BarChart>
+                            </ResponsiveContainer>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div className="glassmorphic">
-                                <h2 className="text-lg font-semibold mb-2">Top 5 Corporates (Value)</h2>
-                                <ResponsiveContainer width="100%" height={350}>
-                                    <BarChart data={aggregateTop5(filteredData, 'Corporate', 'Value 25', 'Value 24')} onClick={(data) => handleChartClick(data, 'Corporate')}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                        <XAxis dataKey="name" stroke="#ffffff" fontSize={12} angle={-45} textAnchor="end" height={60} />
-                                        <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
-                                        <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
-                                        <Legend />
-                                        <Bar dataKey="value1" name="Value 2025" fill="#ffd700" className="chart-bar">
-                                            <LabelList dataKey="value1" position="top" formatter={formatNumber} fill="#ffffff" fontSize={12} />
-                                        </Bar>
-                                        <Bar dataKey="value2" name="Value 2024" fill="#8b5cf6" className="chart-bar">
-                                            <LabelList dataKey="value2" position="top" formatter={formatNumber} fill="#ffffff" fontSize={12} />
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="glassmorphic">
-                                <h2 className="text-lg font-semibold mb-2">Top 5 Corporates (Unit)</h2>
-                                <ResponsiveContainer width="100%" height={350}>
-                                    <BarChart data={aggregateTop5(filteredData, 'Corporate', 'Unit 25', 'Unit 24')} onClick={(data) => handleChartClick(data, 'Corporate')}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                        <XAxis dataKey="name" stroke="#ffffff" fontSize={12} angle={-45} textAnchor="end" height={60} />
-                                        <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
-                                        <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
-                                        <Legend />
-                                        <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" className="chart-bar">
-                                            <LabelList dataKey="value1" position="top" formatter={formatNumber} fill="#ffffff" fontSize={12} />
-                                        </Bar>
-                                        <Bar dataKey="value2" name="Unit 2024" fill="#8b5cf6" className="chart-bar">
-                                            <LabelList dataKey="value2" position="top" formatter={formatNumber} fill="#ffffff" fontSize={12} />
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="glassmorphic">
-                                <h2 className="text-lg font-semibold mb-2">Top 5 Brands (Value)</h2>
-                                <ResponsiveContainer width="100%" height={350}>
-                                    <BarChart data={aggregateTop5(filteredData, 'Brands', 'Value 25', 'Value 24')} onClick={(data) => handleChartClick(data, 'Brand')}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                        <XAxis dataKey="name" stroke="#ffffff" fontSize={12} angle={-45} textAnchor="end" height={60} />
-                                        <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
-                                        <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
-                                        <Legend />
-                                        <Bar dataKey="value1" name="Value 2025" fill="#ffd700" className="chart-bar">
-                                            <LabelList dataKey="value1" position="top" formatter={formatNumber} fill="#ffffff" fontSize={12} />
-                                        </Bar>
-                                        <Bar dataKey="value2" name="Value 2024" fill="#8b5cf6" className="chart-bar">
-                                            <LabelList dataKey="value2" position="top" formatter={formatNumber} fill="#ffffff" fontSize={12} />
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="glassmorphic">
-                                <h2 className="text-lg font-semibold mb-2">Top 5 Brands (Unit)</h2>
-                                <ResponsiveContainer width="100%" height={350}>
-                                    <BarChart data={aggregateTop5(filteredData, 'Brands', 'Unit 25', 'Unit 24')} onClick={(data) => handleChartClick(data, 'Brand')}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                        <XAxis dataKey="name" stroke="#ffffff" fontSize={12} angle={-45} textAnchor="end" height={60} />
-                                        <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
-                                        <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
-                                        <Legend />
-                                        <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" className="chart-bar">
-                                            <LabelList dataKey="value1" position="top" formatter={formatNumber} fill="#ffffff" fontSize={12} />
-                                        </Bar>
-                                        <Bar dataKey="value2" name="Unit 2024" fill="#8b5cf6" className="chart-bar">
-                                            <LabelList dataKey="value2" position="top" formatter={formatNumber} fill="#ffffff" fontSize={12} />
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="glassmorphic">
-                                <h2 className="text-lg font-semibold mb-2">Top 5 Categories (Value)</h2>
-                                <ResponsiveContainer width="100%" height={350}>
-                                    <BarChart data={aggregateTop5(filteredData, 'Category', 'Value 25', 'Value 24')} onClick={(data) => handleChartClick(data, 'Category')}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                        <XAxis dataKey="name" stroke="#ffffff" fontSize={12} angle={-45} textAnchor="end" height={60} />
-                                        <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
-                                        <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
-                                        <Legend />
-                                        <Bar dataKey="value1" name="Value 2025" fill="#ffd700" className="chart-bar">
-                                            <LabelList dataKey="value1" position="top" formatter={formatNumber} fill="#ffffff" fontSize={12} />
-                                        </Bar>
-                                        <Bar dataKey="value2" name="Value 2024" fill="#8b5cf6" className="chart-bar">
-                                            <LabelList dataKey="value2" position="top" formatter={formatNumber} fill="#ffffff" fontSize={12} />
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="glassmorphic">
-                                <h2 className="text-lg font-semibold mb-2">Top 5 Categories (Unit)</h2>
-                                <ResponsiveContainer width="100%" height={350}>
-                                    <BarChart data={aggregateTop5(filteredData, 'Category', 'Unit 25', 'Unit 24')} onClick={(data) => handleChartClick(data, 'Category')}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                        <XAxis dataKey="name" stroke="#ffffff" fontSize={12} angle={-45} textAnchor="end" height={60} />
-                                        <YAxis stroke="#ffffff" fontSize={12} tickFormatter={formatNumber} />
-                                        <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
-                                        <Legend />
-                                        <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" className="chart-bar">
-                                            <LabelList dataKey="value1" position="top" formatter={formatNumber} fill="#ffffff" fontSize={12} />
-                                        </Bar>
-                                        <Bar dataKey="value2" name="Unit 2024" fill="#8b5cf6" className="chart-bar">
-                                            <LabelList dataKey="value2" position="top" formatter={formatNumber} fill="#ffffff" fontSize={12} />
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="glassmorphic">
-                                <h2 className="text-lg font-semibold mb-2">Market Share by Top 5 Corporates</h2>
-                                <ResponsiveContainer width="100%" height={350}>
-                                    <PieChart>
-                                        <Pie
-                                            data={aggregateTop5(filteredData, 'Corporate', 'Share 25')}
-                                            dataKey="value1"
-                                            nameKey="name"
-                                            cx="50%"
-                                            cy="50%"
-                                            outerRadius={100}
-                                            label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
-                                            labelLine={false}
-                                            onClick={(data) => handleChartClick({ activeLabel: data.name }, 'Corporate')}
-                                            className="chart-pie"
-                                        >
-                                            {aggregateTop5(filteredData, 'Corporate', 'Share 25').map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip formatter={value => `${value.toFixed(2)}%`} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
-                                        <Legend />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="glassmorphic">
-                                <h2 className="text-lg font-semibold mb-2">Growth Value by Top 5 Categories</h2>
-                                <ResponsiveContainer width="100%" height={350}>
-                                    <AreaChart data={aggregateTop5(filteredData, 'Category', 'Growth Value 25')} onClick={(data) => handleChartClick(data, 'Category')}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                        <XAxis dataKey="name" stroke="#ffffff" fontSize={12} angle={-45} textAnchor="end" height={60} />
-                                        <YAxis stroke="#ffffff" fontSize={12} tickFormatter={value => `${value.toFixed(1)}%`} />
-                                        <Tooltip formatter={value => `${value.toFixed(2)}%`} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
-                                        <Legend />
-                                        <Area type="monotone" dataKey="value1" name="Growth Value 2025" fill="#10b981" stroke="#10b981" fillOpacity={0.4} className="chart-area">
-                                            <LabelList dataKey="value1" position="top" formatter={value => `${value.toFixed(1)}%`} fill="#ffffff" fontSize={12} />
-                                        </Area>
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
+                        {/* Top 5 Brands (Value 25 vs Value 24) */}
+                        <div className="glassmorphic chart-container">
+                            <h2 className="text-lg mb-2">Top 5 Brands (Value 2025 vs 2024)</h2>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={top5BrandsValue}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={formatNumber} />
+                                    <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
+                                    <Legend />
+                                    <Bar dataKey="value1" name="Value 2025" fill="#ffd700" />
+                                    <Bar dataKey="value2" name="Value 2024" fill="#8b5cf6" />
+                                </BarChart>
+                            </ResponsiveContainer>
                         </div>
 
-                        <div className="glassmorphic mt-6 overflow-auto max-h-[400px]">
-                            <h2 className="text-lg font-semibold mb-2">All Entries</h2>
-                            <table className="w-full border-collapse">
-                                <thead>
-                                    <tr className="bg-white/15 sticky top-0">
-                                        <th className="p-3 text-left">Category</th>
-                                        <th className="p-3 text-left">Brand</th>
-                                        <th className="p-3 text-left">Corporate</th>
-                                        <th className="p-3 text-left">Molecule</th>
-                                        <th className="p-3 text-left">Value 2025</th>
-                                        <th className="p-3 text-left">Share 2025</th>
-                                        <th className="p-3 text-left">Growth 2025</th>
-                                        <th className="p-3 text-left">Units 2025</th>
+                        {/* Top 5 Brands (Unit 25 vs Unit 24) */}
+                        <div className="glassmorphic chart-container">
+                            <h2 className="text-lg mb-2">Top 5 Brands (Unit 2025 vs 2024)</h2>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={top5BrandsUnit}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={formatNumber} />
+                                    <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
+                                    <Legend />
+                                    <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" />
+                                    <Bar dataKey="value2" name="Unit 2024" fill="#8b5cf6" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* Top 5 Categories (Value 25 vs Value 24) */}
+                        <div className="glassmorphic chart-container">
+                            <h2 className="text-lg mb-2">Top 5 Categories (Value 2025 vs 2024)</h2>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={top5CategoriesValue}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={formatNumber} />
+                                    <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
+                                    <Legend />
+                                    <Bar dataKey="value1" name="Value 2025" fill="#ffd700" />
+                                    <Bar dataKey="value2" name="Value 2024" fill="#8b5cf6" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* Top 5 Categories (Unit 25 vs Unit 24) */}
+                        <div className="glassmorphic chart-container">
+                            <h2 className="text-lg mb-2">Top 5 Categories (Unit 2025 vs 2024)</h2>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={top5CategoriesUnit}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={formatNumber} />
+                                    <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
+                                    <Legend />
+                                    <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" />
+                                    <Bar dataKey="value2" name="Unit 2024" fill="#8b5cf6" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* Pie Chart for Market Share by Top 5 Corporates */}
+                        <div className="glassmorphic chart-container">
+                            <h2 className="text-lg mb-2">Market Share by Top 5 Corporates (2025)</h2>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={top5CorporatesShare}
+                                        dataKey="value1"
+                                        nameKey="name"
+                                        cx="50%"
+                                        cy="50%"
+                                        outerRadius={window.innerWidth <= 600 ? 80 : 100}
+                                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                                        labelLine={false}
+                                    >
+                                        {top5CorporatesShare.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip formatter={value => `${value.toFixed(2)}%`} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* Area Chart for Growth by Top 5 Categories */}
+                        <div className="glassmorphic chart-container">
+                            <h2 className="text-lg mb-2">Growth Value by Top 5 Categories (2025)</h2>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={top5CategoriesGrowth}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={value => `${value.toFixed(1)}%`} />
+                                    <Tooltip formatter={value => `${value.toFixed(2)}%`} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
+                                    <Legend />
+                                    <Area type="monotone" dataKey="value1" name="Growth Value 2025" fill="#10b981" stroke="#10b981" fillOpacity={0.4} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Table for all filtered entries */}
+                    <div className="glassmorphic table-container">
+                        <h2 className="text-lg mb-2">All Entries (Sorted by Value 2025)</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Brand</th>
+                                    <th>Corporate</th>
+                                    <th>Value 2025</th>
+                                    <th>Share 2025</th>
+                                    <th>Growth 2025</th>
+                                    <th>Units 2025</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredData.map((row, index) => (
+                                    <tr key={index}>
+                                        <td>{row.Category || 'N/A'}</td>
+                                        <td>{row.Brands || 'N/A'}</td>
+                                        <td>{row.Corporate || 'N/A'}</td>
+                                        <td>{formatNumber(parseFloat(row['Value 25']) || 0)}</td>
+                                        <td>{(parseFloat(row['Share 25']) || 0).toFixed(2)}%</td>
+                                        <td>{(parseFloat(row['Growth Value 25']) || 0).toFixed(2)}%</td>
+                                        <td>{formatNumber(parseFloat(row['Unit 25']) || 0)}</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredData.map((row, index) => (
-                                        <tr
-                                            key={index}
-                                            className="table-row border-b border-white/20"
-                                            onClick={() => handleTableRowClick(row, 'Brand')}
-                                        >
-                                            <td className="p-3">{row.Category || 'N/A'}</td>
-                                            <td className="p-3">{row.Brands || 'N/A'}</td>
-                                            <td className="p-3">{row.Corporate || 'N/A'}</td>
-                                            <td className="p-3">{row.Molecule || 'N/A'}</td>
-                                            <td className="p-3">{formatNumber(parseFloat(row['Value 25']) || 0)}</td>
-                                            <td className="p-3">{(parseFloat(row['Share 25']) || 0).toFixed(2)}%</td>
-                                            <td className="p-3">{(parseFloat(row['Growth Value 25']) || 0).toFixed(2)}%</td>
-                                            <td className="p-3">{formatNumber(parseFloat(row['Unit 25']) || 0)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
 
-                        <div className="glassmorphic p-4 mt-6">
-                            <h2 className="text-lg font-semibold mb-2">Interesting Fact</h2>
-                            <p>
-                                Did you know? The pharmaceutical market is evolving rapidly, with top brands driving significant growth in their respective categories.
-                            </p>
-                        </div>
+                    {/* Interesting fact */}
+                    <div className="glassmorphic p-4">
+                        <h2 className="text-lg mb-2">Interesting Fact</h2>
+                        <p>
+                            Did you know? GETZ PHARMA leads the market with the highest total value in 2025, driven by strong performance in brands like GABICA in the PREGABALIN category, achieving a remarkable 26.95% growth!
+                        </p>
                     </div>
                 </div>
             );
         };
 
+        // Rendering the app
         const root = createRoot(document.getElementById('root'));
         root.render(<Dashboard />);
     </script>
 </body>
 </html>
-

@@ -18,8 +18,11 @@
             color: #ffffff;
             font-family: 'Inter', Arial, sans-serif;
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             margin: 0;
-            padding: 2vw;
+            padding: 20px;
             box-sizing: border-box;
         }
         .glassmorphic {
@@ -28,7 +31,7 @@
             border-radius: 16px;
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 2vw;
+            padding: 20px;
             transition: all 0.3s ease;
         }
         .glassmorphic:hover {
@@ -39,7 +42,7 @@
             background: linear-gradient(45deg, #ffd700, #ffaa00);
             color: #1e1e1e;
             font-weight: bold;
-            padding: 0.8rem 1.6rem;
+            padding: 8px 16px;
             border-radius: 8px;
             border: none;
             cursor: pointer;
@@ -53,42 +56,37 @@
             color: #ef4444; /* Red text for dropdowns */
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 8px;
-            padding: 0.8rem;
-            font-size: calc(12px + 0.5vw);
+            padding: 8px;
+            font-size: 14px;
             cursor: pointer;
             transition: all 0.2s ease;
-            width: 100%;
-            max-width: 200px;
         }
         select:focus {
             outline: none;
             border-color: #ffd700;
         }
         option {
-            color: #ef4444;
+            color: #ef4444; /* Red text for dropdown options */
             background: #1e1e1e;
         }
         .chart-container {
             width: 100%;
-            height: calc(300px + 5vw); /* Responsive height */
-            margin-bottom: 3vw;
+            height: 350px;
+            margin-bottom: 24px;
         }
         .table-container {
             max-height: 400px;
             overflow-y: auto;
-            overflow-x: auto;
-            margin-bottom: 3vw;
+            margin-bottom: 24px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 600px; /* Ensures horizontal scrolling on mobile */
         }
         th, td {
-            padding: 1vw;
+            padding: 12px;
             text-align: left;
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: calc(10px + 0.5vw);
         }
         th {
             background: rgba(255, 255, 255, 0.15);
@@ -98,75 +96,58 @@
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 2vw;
+            padding: 24px;
         }
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2vw;
-            margin-bottom: 3vw;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
         }
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 2vw;
+            gap: 24px;
         }
         @media (min-width: 1024px) {
             .grid-2 {
                 grid-template-columns: 1fr 1fr;
             }
         }
-        @media (max-width: 600px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-            .chart-container {
-                height: 250px; /* Smaller charts on mobile */
-            }
-            th, td {
-                padding: 0.5vw;
-                font-size: calc(8px + 0.5vw);
-            }
-            select {
-                font-size: calc(10px + 0.5vw);
-                padding: 0.5rem;
-            }
-        }
         .flex {
             display: flex;
             flex-wrap: wrap;
-            gap: 2vw;
+            gap: 16px;
             justify-content: center;
-            margin-bottom: 3vw;
+            margin-bottom: 24px;
         }
         .text-center {
             text-align: center;
         }
         .text-lg {
-            font-size: calc(14px + 0.5vw);
+            font-size: 18px;
             font-weight: 600;
         }
         .text-2xl {
-            font-size: calc(18px + 0.5vw);
+            font-size: 24px;
             font-weight: bold;
         }
         .text-3xl {
-            font-size: calc(24px + 0.5vw);
+            font-size: 30px;
             font-weight: bold;
         }
         .mb-2 {
-            margin-bottom: 1vw;
+            margin-bottom: 8px;
         }
         .mb-6 {
-            margin-bottom: 3vw;
+            margin-bottom: 24px;
         }
         .p-4 {
-            padding: 1.5vw;
+            padding: 16px;
         }
         /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
-            height: 8px;
         }
         ::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.1);
@@ -386,8 +367,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={top5CorporatesValue}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Value 2025" fill="#ffd700" />
@@ -402,8 +383,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={top5CorporatesUnit}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" />
@@ -418,8 +399,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={top5BrandsValue}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Value 2025" fill="#ffd700" />
@@ -434,8 +415,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={top5BrandsUnit}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" />
@@ -450,8 +431,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={top5CategoriesValue}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Value 2025" fill="#ffd700" />
@@ -466,8 +447,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={top5CategoriesUnit}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={formatNumber} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={formatNumber} />
                                     <Tooltip formatter={formatNumber} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Bar dataKey="value1" name="Unit 2025" fill="#ffd700" />
@@ -487,7 +468,7 @@
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
-                                        outerRadius={window.innerWidth <= 600 ? 80 : 100}
+                                        outerRadius={100}
                                         label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
                                         labelLine={false}
                                     >
@@ -507,8 +488,8 @@
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={top5CategoriesGrowth}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.3)" />
-                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis stroke="#ffffff" fontSize={calc(10 + 0.5 * window.innerWidth / 100)} tickFormatter={value => `${value.toFixed(1)}%`} />
+                                    <XAxis dataKey="name" stroke="#ffffff" fontSize={14} angle={-45} textAnchor="end" height={60} />
+                                    <YAxis stroke="#ffffff" fontSize={14} tickFormatter={value => `${value.toFixed(1)}%`} />
                                     <Tooltip formatter={value => `${value.toFixed(2)}%`} contentStyle={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px' }} />
                                     <Legend />
                                     <Area type="monotone" dataKey="value1" name="Growth Value 2025" fill="#10b981" stroke="#10b981" fillOpacity={0.4} />
